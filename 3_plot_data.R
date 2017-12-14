@@ -20,10 +20,41 @@ plot_dat <- grand_means
 
 ## Get colors for scenarios
 scenarios <- unique(plot_dat$scenario)
-cb_pal_scenario <- c("#D55E00", "#E69F00", "#56B4E9", "#009E73")
+scenarios
+#cb_pal_scenario <- c("#D55E00", "#E69F00", "#56B4E9", "#009E73")
+
+barplot(1:4, col = cb_pal_scenario)
+
 names(cb_pal_scenario) <- scenarios
 col_scale_scenario <- scale_colour_manual(name = "Model Scenario", values = cb_pal_scenario)
 fill_scale_scenario <- scale_fill_manual(name = "Model Scenario", values = cb_pal_scenario)
+
+##### DISTRIBUTION OF Z-SCORES #####
+
+names(plot_dat)
+
+plot_dat %>% 
+  ggplot(aes(med_z)) + 
+  geom_density(alpha = 0.5, fill = "black") + 
+  labs(x = "Median z-score of coral cover", 
+       y = "Probability density") + 
+  theme(legend.position = c(1,1), legend.justification = c(1.25, 1.25)) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        strip.background = element_blank()) 
+ggsave("figs_sims/density_all_sims.pdf", height = 3.5, width = 3.5)
+
+plot_dat %>% 
+  ggplot(aes(med_z, fill = scenario)) + 
+  geom_density(alpha = 0.5) + 
+  labs(x = "Median z-score of coral cover", 
+       y = "Probability density") + 
+  scale_fill_manual(name = "Model Scenario", values = cb_pal_scenario) + 
+  #theme(legend.position = c(1,1), legend.justification = c(1, 1)) + 
+  theme(legend.position = "none") + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        strip.background = element_blank()) + 
+  facet_wrap(~ scenario)
+ggsave("figs_sims/density_scenario.pdf", height = 7, width = 7)
 
 ##### OASIS Z PLOT #####
 
@@ -49,13 +80,13 @@ plot_dat %>%
            alpha = 0, color = "gray") +
   annotate("rect", xmin = -1, xmax = -2, ymin = 0, ymax = 50,
            alpha = 0, color = "gray") +
-  geom_point(alpha = 0.75) + 
+  geom_point(alpha = 0.75, size = 5) + 
   theme(legend.position = c(1,1), legend.justification = c(1.25, 1.25)) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
   scale_fill_manual(name = "Model Scenario", values = cb_pal_scenario) + 
   scale_shape_manual(name = "Model Scenario", values = c(21,22,23,25))
 
-#ggsave("figs_sims/oasis_z_plot.pdf", height = 5, width = 6)
+ggsave("figs_sims/oasis_z_plot_big.pdf", height = 5, width = 6)
 
 ##### PICK REPRESENTATIVE SITES #####
 
@@ -148,3 +179,27 @@ pdf("figs_sims/box_time_series_panels.pdf",
 grid.arrange(grobs = box_results, layout_matrix = hlay)
 dev.off()
 
+
+##### ILLUSTRATING THE METHOD #####
+scenarios
+text_df <- data.frame(scenario = scenarios, 
+                      starting_coral = c("cc ~ N(40, 5)"))
+
+
+sim_df %>% 
+  #filter(sim < 11) %>% 
+  ggplot(aes(year, y, color = scenario)) + 
+  theme_bw(base_size = 16) + 
+  ylab("Coral cover (%)") + 
+  xlab("Year") + 
+  scale_y_continuous(limits = c(0, 100)) + 
+  theme(legend.position = "none") + 
+  geom_line(alpha = 0.6, aes(group = sim, color = scenario), 
+            size = 0.5) + 
+  facet_wrap(~ scenario) + 
+  col_scale_scenario + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
+  theme(strip.background = element_blank()) + 
+  geom_text(data = text_df, aes(x = 5, y = 99, label = starting_coral))
+
+ggsave("figs_sims/scenario_examples.pdf", height = 7, width = 7)

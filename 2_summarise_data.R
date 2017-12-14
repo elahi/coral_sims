@@ -20,10 +20,10 @@ library(broom)
 sim_df <- read.csv("output_sims/sim_df.csv") %>% tbl_df() %>% select(-X)
 
 # RELEVEL SCENARIOS
-sim_df <- sim_df %>% 
-  mutate(scenario = factor(scenario, 
-                           levels = c("Stable", "Linear", 
-                                      "Phase_shift", "Oscillations")))
+# sim_df <- sim_df %>% 
+#   mutate(scenario = factor(scenario, 
+#                            levels = c("Stable", "Linear", 
+#                                       "Phase_shift", "Oscillations")))
 
 # How many simulations total?
 n_sims = 400
