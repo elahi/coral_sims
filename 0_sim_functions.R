@@ -39,8 +39,10 @@ phase_shift = 0 * pi # starting at top (cos curve)
 
 ##### STABLE #####
 
-# Starting coral cover with random samples between 5 and select upper bound
-# Flip a coin - sample from a normal distribution OR sample from a uniform distribution
+##' cc = upper value of coral cover, used in normal or uniform distribution (40)
+##' yrs = number of years in the time series (30)
+##' rnorm_theta = probability of observing a zero or one (0.5)
+##' (for the coin flip)
 stable_simF <- function(cc = coral_cover, yrs = number_yrs, rnorm_theta = 0.5){
   
   coin_flip <- sample(c(0, 1), size = 1, prob = c(rnorm_theta, 1 - rnorm_theta))
@@ -77,8 +79,13 @@ stable_simF()
 
 ##### PHASE SHIFT #####
 
-# Starting coral cover with random samples between 5 and select upper bound
-# Flip a coin - sample from a normal distribution OR sample from a uniform distribution
+##' cc = upper value of coral cover, used in normal or uniform distribution (40)
+##' yrs = number of years in the time series (30)
+##' rnorm_theta = probability of observing a zero or one (0.5)
+##' (for the coin flip)
+##' shift_min = the earliest year in which a phase shift can begin (10)
+##' shift_max = the latest year in which a phase shift can begin (30)
+##' 
 phase_shift_simF <- function(cc = coral_cover, yrs = number_yrs, rnorm_theta = 0.5, 
                              shift_min = 10, shift_max = 30){
   
@@ -130,8 +137,15 @@ phase_shift_simF <- function(cc = coral_cover, yrs = number_yrs, rnorm_theta = 0
 
 phase_shift_simF()
 
-###### NEGATIVE LINEAR TREND ######
+###### LINEAR TREND ######
 
+##' cc = upper value of coral cover, used in normal or uniform distribution (40)
+##' yrs = number of years in the time series (30)
+##' rnorm_theta = probability of observing a zero or one (0.5)
+##' (for the coin flip)
+##' trend = slope of the linear trend (-0.5)
+##' trend_sd = standard deviation for the trend (0.25)
+##' 
 linear_simF <- function(cc = coral_cover, yrs = number_yrs, 
                         trend = linear_trend, trend_sd = linear_trend_sd, 
                         rnorm_theta = 0.5){
@@ -177,14 +191,15 @@ linear_simF()
 
 ###### CYCLES ######
 
-##' For the following cosine curve:
-##' y = a * cos(bx + c)
-##' a = amplitude (height)
-##' b = period (length of one cycle of the curve)
-##' if b = 1, we get the natural cycle of the cos curve, i.e., 2*pi
-##' c = phase shift
-##' if c = 0, the cosine curve starts at 'a'
-
+##' cc = upper value of coral cover, used in normal or uniform distribution (30)
+##' yrs = number of years in the time series (30)
+##' rnorm_theta = probability of observing a zero or one (0.5)
+##' (for the coin flip)
+##' trend = slope of the linear trend (0)
+##' trend_sd = standard deviation for the trend (0)
+##' amp = amplitude
+##' period (years) [for a 30 yr time series, a period of 30 results in a U] (40)
+##'
 non_linear_simF <- function(cc = coral_cover, yrs = number_yrs, 
                         trend = linear_trend, trend_sd = linear_trend_sd, 
                         rnorm_theta = 0.5, amplitude = amp){
@@ -237,5 +252,14 @@ non_linear_simF <- function(cc = coral_cover, yrs = number_yrs,
   
   return(sim_df)
 }
+
+##' For the following cosine curve:
+##' y = a * cos(bx + c)
+##' a = amplitude (height)
+##' b = period (length of one cycle of the curve)
+##' if b = 1, we get the natural cycle of the cos curve, i.e., 2*pi
+##' c = phase shift
+##' if c = 0, the cosine curve starts at 'a'
+
 
 non_linear_simF()

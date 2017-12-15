@@ -1,7 +1,7 @@
 ---
-title: "Coral cover simulations"
-author: "Robin Elahi"
-date: "2017-12-14"
+# title: "Coral cover simulations"
+# author: "Robin Elahi"
+# date: "2017-12-14"
 biblio-style: apsr
 bibliography: ~/github/bib/master.bib
 #csl: frontiers-in-ecology-and-the-environment.csl
@@ -11,7 +11,7 @@ fontsize: 11pt
 geometry: margin=1in
 output:
   pdf_document:
-    fig_caption: no
+    fig_caption: yes
     keep_tex: no
     latex_engine: pdflatex
   word_document: default
@@ -35,8 +35,15 @@ theme_set(theme_bw(base_size = 12))
 library(knitr)
 ```
 
-## Introduction
-Numerical simulations were based on modelled coral cover representing time-series analysis of a coral reef experiencing a variety of prescribed disturbance histories. 
+# Identifying and characterising coral reef “oases”
+
+Guest JR, Edmunds PJ, Gates RD, Kuffner IB, Andersson AJ, Barnes BB, Chollett I, Elahi R, Courtney TA, Gross K, Lenz EA, Mitarai S, Mumby PJ, Nelson HR, Parker BA, Putnam HM, Rogers CS, Toth LT
+
+# Supporting information
+
+## Appendix 1.
+
+We used numerical simulations to evaluate a wide range of empirical possibilities of coral reef trajectories. The simulations were intended to capture the behaviour of long-term coral cover dynamics based on four predetermined model scenarios considered as representative of trajectories observed from long-term monitoring of reefs: (1) linear trends (i.e., where coral cover declines or increases linearly; (2) nonlinear oscillations, (3) phase shifts (i.e., where coral cover declines suddenly and remains low); and (4) long-term stability (i.e., where coral cover can vary from year to year, but does not increase or decrease significantly over time). For each scenario, we generated 30 random values for coral cover for a thirty-year time-series. The model parameters were chosen to return values of coral cover between 0 and 65%, a range that is representative of contemporary average values from the Caribbean and Indo-West Pacific. 
 
 ### Stable
 For sites exhibiting stable coral cover ($y_i$) in year $i$, we generated 30 random values about an intercept ($b$) with variation ($w_i$), for a thirty-year time-series as follows:
@@ -46,6 +53,47 @@ $$b = \mathcal{N}(40,5)~|~\mathcal{U}(5,40)$$
 $$ \sigma_b = \mathcal{N}(0.1b, 0.5)$$
 $$ w_i = \mathcal{N}(0, \sigma_b)$$
 where $\sigma_b$ is the standard deviation about $b$.  The intercept $b$ is chosen from either a normal ($\mathcal{N}$) or uniform distribution ($\mathcal{U}$), determined by a fair coin flip. 
+
+The R function to return a stable time series is:
+
+```{r stable, echo = TRUE}
+##' cc = upper value of coral cover, used in normal or uniform distribution (40)
+##' yrs = number of years in the time series (30)
+##' rnorm_theta = probability of observing a zero or one (0.5)
+##' (for the coin flip)
+##'
+stable_simF <- function(cc = coral_cover, yrs = number_yrs, rnorm_theta = 0.5){
+  
+  coin_flip <- sample(c(0, 1), size = 1, prob = c(rnorm_theta, 1 - rnorm_theta))
+  
+  # If coin_flip is 0, sample from normal distribution:
+  if(coin_flip == 0){
+    # Choose the starting coral cover from a normal distribution
+    cc = rnorm(1, mean = cc, sd = 5)}
+  
+  # Otherwise, sample from a uniform distribution
+  if(coin_flip == 1){
+    # Choose the starting coral cover from a uniform distribution
+    cc = runif(1, max = cc, min = 5)}
+  
+  # Choose the starting coral cover sd from a normal distribution
+  cc_sd = 0.1 * cc # make standard deviation 10% of starting coral cover
+  cc_sd = rnorm(1, mean = cc_sd, sd = 0.5)
+  
+  # Change cc_sd if below some arbitrary threshold
+  cc_sd = ifelse(cc_sd < 0.1, 0.1, cc_sd)
+  
+  ## Get time series
+  y = rnorm(number_yrs, mean = cc, sd = cc_sd)
+  
+  ## Assemble data frame
+  sim_df <- data.frame(year = 1:number_yrs, 
+                       w = cc - y, slope = 0, intercept = cc, 
+                       y = y)
+  
+  return(sim_df)
+}
+```
 
 ### Phase shift
 For sites exhibiting a phase shift, a new intercept ($b_{new}$) and variation ($w_{i_{new}}$) was selected at a year chosen randomly between year 10 and year 30 ($x_{shift}$) of a thirty-year time-series as follows:
@@ -58,6 +106,65 @@ $$ \sigma_{b_{new}} = \mathcal{N}(\sigma_{b}, 0.1)$$
 $$ w_{i_{new}} = \mathcal{N}(0, \sigma_{b_{new}})$$
 where $\sigma_{b_{new}}$ is the new standard deviation about $b_{new}$. The effect of the phase shift is to reduce the coral cover to a value chosen uniformly between 1 and half of the original $b$.   
 
+```{r phase_shift, echo = TRUE}
+##' cc = upper value of coral cover, used in normal or uniform distribution (40)
+##' yrs = number of years in the time series (30)
+##' rnorm_theta = probability of observing a zero or one (0.5)
+##' (for the coin flip)
+##' shift_min = the earliest year in which a phase shift can begin (10)
+##' shift_max = the latest year in which a phase shift can begin (30)
+##' 
+phase_shift_simF <- function(cc = coral_cover, yrs = number_yrs, rnorm_theta = 0.5, 
+                             shift_min = 10, shift_max = 30){
+  
+  coin_flip <- sample(c(0, 1), size = 1, prob = c(rnorm_theta, 1 - rnorm_theta))
+  
+  # If coin_flip is 0, sample from normal distribution:
+  if(coin_flip == 0){
+    # Choose the starting coral cover from a normal distribution
+    cc = rnorm(1, mean = cc, sd = 5)}
+  
+  # Otherwise, sample from a uniform distribution
+  if(coin_flip == 1){
+    # Choose the starting coral cover from a uniform distribution
+    cc = runif(1, max = cc, min = 5)}
+  
+  # Choose the starting coral cover sd from a normal distribution
+  cc_sd = 0.1 * cc # make standard deviation 10% of starting coral cover
+  cc_sd = rnorm(1, mean = cc_sd, sd = 0.5)
+  
+  # Change cc_sd if below some arbitrary threshold
+  cc_sd = ifelse(cc_sd < 0.1, 0.1, cc_sd)
+  
+  ## Get time series
+  y = rnorm(number_yrs, mean = cc, sd = cc_sd)
+  
+  ## Now choose when the phase shift happens
+  begin_shift = floor(runif(1, min = shift_min, max = shift_max))
+  
+  ## Get the new coral cover mean
+  cc_new = runif(1, max = 0.5*cc, min = 1)
+  
+  ## Get the coral cover sd, similar to old sd
+  cc_sd_new = rnorm(1, mean = cc_sd, sd = 0.1)
+  
+  # Change cc_sd_new if below some arbitrary threshold
+  cc_sd_new = ifelse(cc_sd_new < 0.1, 0.1, cc_sd_new)
+  
+  ## Get phase shift time series
+  y_new = rnorm(number_yrs, mean = cc_new, sd = cc_sd_new)
+  
+  ## Assemble data frame
+  sim_df <- data.frame(year = 1:number_yrs, 
+                       w = cc - y, slope = 0, intercept = cc, 
+                       y = y) %>% 
+    mutate(y = ifelse(year < begin_shift, y, y_new))
+  
+  return(sim_df)
+}
+```
+
+
 ### Linear trend
 For sites exhibiting a linear trend in coral cover, a slope (m) was also selected randomly with a thirty-year time series determined by the equation for a line, as follows:
 
@@ -68,5 +175,133 @@ $$ w_i = \mathcal{N}(0, \sigma_b)$$
 $$ m = \mathcal{N}(-0.5, 0.25)$$
 where $\sigma_b$ is the standard deviation about $b$.    
 
+```{r linear, echo = T}
+##' cc = upper value of coral cover, used in normal or uniform distribution (40)
+##' yrs = number of years in the time series (30)
+##' rnorm_theta = probability of observing a zero or one (0.5)
+##' (for the coin flip)
+##' trend = slope of the linear trend (-0.5)
+##' trend_sd = standard deviation for the trend (0.25)
+##' 
+linear_simF <- function(cc = coral_cover, yrs = number_yrs, 
+                        trend = linear_trend, trend_sd = linear_trend_sd, 
+                        rnorm_theta = 0.5){
+  
+  coin_flip <- sample(c(0, 1), size = 1, prob = c(rnorm_theta, 1 - rnorm_theta))
+  
+  # If coin_flip is 0, sample from normal distribution:
+  if(coin_flip == 0){
+    # Choose the starting coral cover from a normal distribution
+    cc = rnorm(1, mean = cc, sd = 5)}
+  
+  # Otherwise, sample from a uniform distribution
+  if(coin_flip == 1){
+    # Choose the starting coral cover from a uniform distribution
+    cc = runif(1, max = cc, min = 5)}
+  
+  # Choose the starting coral cover sd from a normal distribution
+  cc_sd = 0.1 * cc # make standard deviation 10% of starting coral cover
+  cc_sd = rnorm(1, mean = cc_sd, sd = 0.5)
+  
+  # Change cc_sd if below some arbitrary threshold
+  cc_sd = ifelse(cc_sd < 0.1, 0.1, cc_sd)
+  
+  ## Random variation for each time point
+  w <- rnorm(number_yrs, mean = 0, sd = cc_sd) 
+  ## Random value for slope
+  slope <- rnorm(1, mean = trend, sd = trend_sd)
+  ## Random value for intercept (i.e., the starting coral cover)
+  intercept <- rnorm(1, cc, sd = cc_sd)
+  
+  ## Get time series
+  y <- slope * x + intercept + w
+  
+  ## Assemble data frame
+  sim_df <- data.frame(year = 1:number_yrs, 
+                       w = w, slope = slope, intercept = intercept, 
+                       y = y)
+  
+  return(sim_df)
+}
+```
+
+
 ### Oscillations
-Finally, we used a cosine curve (y = a*cos (bx + c) + w) to simulate oscillations over time, with an amplitude (a) and phase shift (c). 
+Finally, we used a cosine curve to simulate oscillations over time:
+
+$$y_i = acos(\dfrac{2 \pi x}{p} + \pi c) + b + w_i$$
+$$a = \mathcal{N}(15,7.5)$$
+$$p = \mathcal{N}(40,5)$$
+$$c = \mathcal{N}(0,0.25)$$
+$$b = \mathcal{N}(30,5)~|~\mathcal{U}(5,30)$$
+ with an amplitude ($a$), period ($p$) and horizontal shift ($\pi c$). In this equation, $b$ represents the vertical shift of the cosine curve. Note that the $b_{mu}$ is 30 instead of 40 as previously, to prevent unusually high coral covers due to the oscillations.  
+ 
+```{r oscillations, echo = T}
+##' cc = upper value of coral cover, used in normal or uniform distribution (30)
+##' yrs = number of years in the time series (30)
+##' rnorm_theta = probability of observing a zero or one (0.5)
+##' (for the coin flip)
+##' trend = slope of the linear trend (0)
+##' trend_sd = standard deviation for the trend (0)
+##' amp = amplitude
+##' period (years) [for a 30 yr time series, a period of 30 results in a U] (40)
+##'
+non_linear_simF <- function(cc = coral_cover, yrs = number_yrs, 
+                        trend = linear_trend, trend_sd = linear_trend_sd, 
+                        rnorm_theta = 0.5, amplitude = amp){
+  
+  coin_flip <- sample(c(0, 1), size = 1, prob = c(rnorm_theta, 1 - rnorm_theta))
+  
+  # If coin_flip is 0, sample from normal distribution:
+  if(coin_flip == 0){
+    # Choose the starting coral cover from a normal distribution
+    cc = rnorm(1, mean = cc, sd = 5)}
+  
+  # Otherwise, sample from a uniform distribution
+  if(coin_flip == 1){
+    # Choose the starting coral cover from a uniform distribution
+    cc = runif(1, max = cc, min = 5)}
+  
+  # Choose the starting coral cover sd from a normal distribution
+  cc_sd = 0.1 * cc # make standard deviation 10% of starting coral cover
+  cc_sd = rnorm(1, mean = cc_sd, sd = 0.5)
+  
+  # Change cc_sd if below some arbitrary threshold
+  cc_sd = ifelse(cc_sd < 0.1, 0.1, cc_sd)
+  
+  ## Random variation for each time point
+  w <- rnorm(number_yrs, mean = 0, sd = cc_sd) 
+  ## Random value for slope
+  slope <- rnorm(1, mean = trend, sd = trend_sd)
+  ## Random value for intercept (i.e., the starting coral cover)
+  intercept <- rnorm(1, cc, sd = cc_sd)
+  
+  # Phase shift
+  phase_shift = runif(1, 0, 0.25) * pi
+  
+  # Amplitude
+  amp = rnorm(1, mean = amp, sd = amp*0.5)
+  
+  # Period
+  period = rnorm(1, mean = period_yrs, sd = period_yrs_sd)
+  
+  # Vector representing the nonlinear trend
+  cs = amp * cos(2*pi*1:number_yrs/period + phase_shift)
+
+  ## Get time series
+  y <- slope * x + intercept + w + cs
+
+  ## Assemble data frame
+  sim_df <- data.frame(year = 1:number_yrs, 
+                       w = w, slope = slope, intercept = intercept, 
+                       y = y)
+  
+  return(sim_df)
+}
+```
+ 
+\newpage
+
+![Time series of coral cover from numerical simulations representing four different reef trajectories (n = 100 per trajectory).](../figs_sims/scenario_examples.pdf){width=80%}
+
+ 
