@@ -21,7 +21,7 @@ plot_dat <- grand_means
 ## Get colors for scenarios
 scenarios <- unique(plot_dat$scenario)
 scenarios
-#cb_pal_scenario <- c("#D55E00", "#E69F00", "#56B4E9", "#009E73")
+cb_pal_scenario <- c("#D55E00", "#E69F00", "#56B4E9", "#009E73")
 
 barplot(1:4, col = cb_pal_scenario)
 
@@ -42,6 +42,17 @@ plot_dat %>%
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         strip.background = element_blank()) 
 ggsave("figs_sims/density_all_sims.pdf", height = 3.5, width = 3.5)
+
+plot_dat %>% 
+  filter(scenario != "Stable") %>% 
+  ggplot(aes(med_z)) + 
+  geom_density(alpha = 0.5, fill = "black") + 
+  labs(x = "Median z-score of coral cover", 
+       y = "Probability density") + 
+  theme(legend.position = c(1,1), legend.justification = c(1.25, 1.25)) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        strip.background = element_blank()) 
+ggsave("figs_sims/density_all_sims_no_stable.pdf", height = 3.5, width = 3.5)
 
 plot_dat %>% 
   ggplot(aes(med_z, fill = scenario)) + 
@@ -181,25 +192,53 @@ dev.off()
 
 
 ##### ILLUSTRATING THE METHOD #####
+
+## Relevel scenarios 
+sim_df2 <- sim_df %>%
+  mutate(scenario = factor(scenario,
+                           levels = c("Stable", "Linear",
+                                      "Phase_shift", "Oscillations")))
+
 scenarios
 text_df <- data.frame(scenario = scenarios, 
-                      starting_coral = c("cc ~ N(40, 5)"))
+                      cc = c("b ~ N(40, 5) | U(40, 5)", 
+                             "b ~ N(40, 5) | U(40, 5); bnew ~ U(0.5b, 1)", 
+                             "b ~ N(40, 5) | U(40, 5)", 
+                             "b ~ N(30, 5) | U(30, 5)"), 
+                      cc_sd = c("cc_sd ~ N(0.1b, 0.5)"), 
+                      w = c(as.character(expression(paste(w[i], " ~ N(0, cc_sd)")))), 
+                                #"w ~ N(0.1 b, 0.5); wnew ~ N(w, 0.1)", 
+                                #"w ~ N(0.1 b, 0.5)", 
+                                #"w ~ N(0.1 b, 0.5)"), 
+                      equation = c(as.character(expression(paste(y[i], " = b + ", w[i]))), 
+                                   "y = b + w; ynew = bnew + wnew", 
+                                   "y = mx + b + w", 
+                                   as.character(expression(paste(y[i], " = b + ", w[i])))), 
+                      extras = c("", 
+                                 "",
+                                 "m ~ N(-0.5, 0.25)", 
+                                 paste("c ~ N(0, 0.25)", "a ~ N(15, 7.5)", "p ~ N(40, 5)", sep = ";") 
+                                 ))
 
+text_df
 
 sim_df %>% 
-  #filter(sim < 11) %>% 
+  #filter(sim < 2) %>% 
   ggplot(aes(year, y, color = scenario)) + 
   theme_bw(base_size = 16) + 
   ylab("Coral cover (%)") + 
   xlab("Year") + 
-  scale_y_continuous(limits = c(0, 100)) + 
+  scale_y_continuous(limits = c(0, 80)) + 
   theme(legend.position = "none") + 
   geom_line(alpha = 0.6, aes(group = sim, color = scenario), 
             size = 0.5) + 
   facet_wrap(~ scenario) + 
   col_scale_scenario + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
-  theme(strip.background = element_blank()) + 
-  geom_text(data = text_df, aes(x = 5, y = 99, label = starting_coral))
+  theme(strip.background = element_blank()) 
+  # geom_text(data = text_df, aes(x = 1, y = 99, label = equation), hjust = 0, parse = T) + 
+  # geom_text(data = text_df, aes(x = 1, y = 89, label = cc), hjust = 0, parse = F) + 
+  # geom_text(data = text_df, aes(x = 1, y = 79, label = cc_sd), hjust = 0, parse = F) + 
+  # geom_text(data = text_df, aes(x = 1, y = 69, label = extras), hjust = 0)
 
 ggsave("figs_sims/scenario_examples.pdf", height = 7, width = 7)

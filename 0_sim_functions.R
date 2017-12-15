@@ -221,8 +221,10 @@ non_linear_simF <- function(cc = coral_cover, yrs = number_yrs,
   # Amplitude
   amp = rnorm(1, mean = amp, sd = amp*0.5)
   
-  ## Catch the wave
+  # Period
   period = rnorm(1, mean = period_yrs, sd = period_yrs_sd)
+  
+  # Vector representing the nonlinear trend
   cs = amp * cos(2*pi*1:number_yrs/period + phase_shift)
 
   ## Get time series
