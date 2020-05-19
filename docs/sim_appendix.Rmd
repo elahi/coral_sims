@@ -10,11 +10,11 @@ fontfamily: mathpazo
 fontsize: 11pt
 geometry: margin=1in
 output:
+  word_document: default
   pdf_document:
     fig_caption: yes
     keep_tex: no
     latex_engine: pdflatex
-  word_document: default
 header-includes:
     - \usepackage{lineno}
     - \linenumbers  
